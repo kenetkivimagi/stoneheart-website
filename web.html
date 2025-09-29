@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Kenet Kivimägi" />
+
+
+<title>Data-Driven Stock Analysis 2024–2025</title>
+
+<script src="web_files/header-attrs-2.29/header-attrs.js"></script>
+<script src="web_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="web_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="web_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="web_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="web_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="web_files/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="web_files/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="web_files/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="web_files/navigation-1.1/tabsets.js"></script>
+<script src="web_files/navigation-1.1/codefolding.js"></script>
+<link href="web_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="web_files/highlightjs-9.12.0/highlight.js"></script>
+<link href="web_files/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="web_files/pagedtable-1.1/js/pagedtable.js"></script>
+<link href="web_files/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet" />
+<script src="web_files/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<link href="web_files/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet" />
+<script src="web_files/datatables-binding-0.34.0/datatables.js"></script>
+<link href="web_files/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="web_files/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="web_files/dt-core-1.13.6/js/jquery.dataTables.min.js"></script>
+<link href="web_files/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet" />
+<script src="web_files/crosstalk-1.2.1/js/crosstalk.min.js"></script>
+<!-- Include Bootstrap JS bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Data-Driven Stock Analysis 2024–2025</h1>
+<h4 class="author">Kenet Kivimägi</h4>
+
+</div>
+
+
+<style>
+/* Make all headings black */
+h1, h2, h3, h4, h5, h6 {
+    color: #000000 !important;
+}
+</style>
+<div id="welcome" class="section level3">
+<h3>Welcome</h3>
+<p>Explore our 2024–2025 data-driven stock analysis. This tool
+highlights operational efficiency, predicted growth, and market
+performance. We combine DEA efficiency and predictive modeling to
+identify stocks with high expected growth and lower risk. All data is
+informational only.</p>
+</div>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This section presents a quantitative analysis of selected stocks
+based on operational efficiency, investment activity, and model-based
+price predictions. <strong>This is for informational purposes only and
+is not investment advice.</strong> Past performance does not guarantee
+future results. Readers should consult a licensed financial advisor
+before making any investment decisions.</p>
+</div>
+<div id="dea-efficiency-scores" class="section level2">
+<h2>DEA Efficiency Scores</h2>
+<div class="card">
+  <div class="card-header" id="headingDEA">
+    <h5 class="mb-0">
+      <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDEA" aria-expanded="false" aria-controls="collapseDEA">
+        DEA Efficiency Score
+      </button>
+    </h5>
+  </div>
+
+  <div id="collapseDEA" class="collapse" aria-labelledby="headingDEA">
+    <div class="card-body">
+      Measures how efficiently a company turns resources into results. Higher scores indicate better efficiency.
+    </div>
+  </div>
+</div>
+<p><br></p>
+<p>We use Data Envelopment Analysis (DEA) to measure how efficiently
+companies turn resources into results. This allows us to identify firms
+that consistently outperform peers and utilize capital, workforce, and
+investments most effectively.</p>
+<p>In fact, the firms with the highest market capitalization also are
+the most efficient:</p>
+<p><img src="web_files/figure-html/dea_visual-1.png" width="672" /></p>
+<p><strong>Note:</strong> DEA scores are based on historical and
+publicly available data and do not guarantee future performance.</p>
+</div>
+<div id="predictive-modeling" class="section level2">
+<h2>Predictive Modeling</h2>
+<div class="card">
+  <div class="card-header" id="headingLasso">
+    <h5 class="mb-0">
+      <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLasso" aria-expanded="false" aria-controls="collapseLasso">
+        LASSO Model Prediction
+      </button>
+    </h5>
+  </div>
+
+  <div id="collapseLasso" class="collapse" aria-labelledby="headingLasso">
+    <div class="card-body">
+      Predicts stock growth based on historical data and company metrics. The LASSO (Least Absolute Shrinkage and Selection Operator) regression helps select the most relevant features while preventing overfitting.
+    </div>
+  </div>
+</div>
+<p><br> We create a predictive model using LASSO to estimate expected
+stock price growth, combining historical financial trends with
+operational metrics. We train this model on past years and use it to
+predict growth for the following year. These predictions are designed to
+study relationships between efficiency and stock performance.</p>
+<pre class="r"><code>source(&quot;model_LASSO.R&quot;)</code></pre>
+<p>Efficiency scores are plotted against the log value of actual growth
+of stock prices in a year. The results show that price growth is
+correlated with efficiency and this effect is present in every sector.
+What is specifically noticeable is that larger DEA scores reduce growth
+variance, in other words, risk. Lowered variance also means that the
+model has higher predictive power for firms which have a high DEA and
+high market cap, since the error term variance is smaller.</p>
+<p><img src="web_files/figure-html/model_visual-1.png" width="672" /></p>
+<p><strong>Disclaimer:</strong> Model outputs are projections only and
+should not be considered recommendations. Actual stock prices may differ
+significantly.</p>
+<p><strong>All metrics are used for analytical purposes and do not
+constitute a recommendation to buy or sell any stock.</strong></p>
+</div>
+<div id="composite-ranking-system" class="section level2">
+<h2>Composite Ranking System</h2>
+<p>Selected companies are ranked using a scoring system that combines:
+<br></p>
+<ol style="list-style-type: decimal">
+<li><p>Operational efficiency <br></p></li>
+<li><p>Relative valuation compared to predicted performance
+<br></p></li>
+</ol>
+<p>This is a hybrid quantitative scoring system combining fundamental
+analysis (financial ratios), predictive modeling (Lasso regression), and
+DEA efficiency scoring.</p>
+</div>
+<div id="top-companies-by-model-score" class="section level2">
+<h2>Top Companies by Model Score</h2>
+<p><strong>Disclaimer:</strong> The numbers below are model outputs and
+do not constitute a recommendation to buy or sell any stock. All
+investments carry risk.</p>
+<div class="datatables html-widget html-fill-item" id="htmlwidget-cbc91865e16558572afc" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-cbc91865e16558572afc">{"x":{"filter":"none","vertical":false,"data":[["MSFT","AAPL","GOOGL","NVDA","WMT","AMZN","MCK","COR","META","CAH"],["Technology","Technology","Communication Services","Technology","Consumer Defensive","Consumer Cyclical","Healthcare","Healthcare","Communication Services","Healthcare"],[511.46,255.46,246.54,178.19,103.16,219.78,760.55,307,743.75,153.71],[4,3,20,29,31,37,26,47,68,51],[3,4,5,2,9,7,23,24,8,27],[7,7,25,31,40,44,49,71,76,78]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Ticker<\/th>\n      <th>Sector<\/th>\n      <th>Price_29.09.2025<\/th>\n      <th>rank_pred<\/th>\n      <th>rank_DEA<\/th>\n      <th>combined_rank<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","scrollX":true,"columnDefs":[{"targets":3,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 0, 3, \",\", \".\", null);\n  }"},{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatCurrency(data, \"$\", 2, 3, \",\", \".\", true, null);\n  }"},{"className":"dt-right","targets":[2,3,4,5]},{"name":"Ticker","targets":0},{"name":"Sector","targets":1},{"name":"Price_29.09.2025","targets":2},{"name":"rank_pred","targets":3},{"name":"rank_DEA","targets":4},{"name":"combined_rank","targets":5}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render"],"jsHooks":[]}</script>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
