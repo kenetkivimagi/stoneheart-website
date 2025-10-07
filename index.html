@@ -57,18 +57,24 @@ body {
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
 .tab-content.active { display: block; }
-.fullpage-iframe {
+.responsive-iframe {
+  position: relative;
   width: 100%;
-  height: 130vh;
-  margin: 0;
-  padding: 0;
+  padding-bottom: 120%;
+  height: 0;
+  overflow: hidden;
+  margin: 10px 0;
 }
-.fullpage-iframe iframe {
+.responsive-iframe iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  border: none;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background-color: white;
 }
-
 #refresh {
   background: #16264d;
   color: white;
@@ -95,23 +101,10 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   padding: 10px;
 }
- 
-/* Make tables fit on mobile */
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-}
 @media (max-width: 600px) {
   .header-container h1 { font-size: 1.2em; }
   .tab { padding: 4px 8px; font-size: 0.75em; margin-right: 2px; }
   #portfolioLine, #portfolioEWMA { height: 300px; }
-
-  /* Scale down the stocks table */
-  .table-responsive iframe {
-    transform: scale(0.7);
-    transform-origin: 0 0;
-    width: calc(100% / 0.7);
-  }
 }
 </style>
 </head>
@@ -121,19 +114,19 @@ body {
   <h1>Stoneheart</h1>
   <div class="tab-container">
     <div class="tab active" data-tab="cv">📄 CV</div>
-    <div class="tab" data-tab="stocks">📈 Model Based Rankings 2025</div>
+    <div class="tab" data-tab="stocks">📈 Top Stock Picks</div>
     <div class="tab" data-tab="growth">💹 Growth Tracker</div>
   </div>
 </div>
 
-<div id="cv" class="tab-content active" style="background-color: #e0e0e0; padding: 0;">
-  <div class="fullpage-iframe">
+<div id="cv" class="tab-content active" style="background-color: #e0e0e0; padding: 10px 0;">
+  <div class="responsive-iframe">
     <iframe src="https://drive.google.com/file/d/1gaxYPlfA4Hqq7lEqLN5UXtuVqMgGdK3U/preview"></iframe>
   </div>
 </div>
 
 <div id="stocks" class="tab-content">
-  <div class="fullpage-iframe table-responsive">
+  <div class="responsive-iframe">
     <iframe src="web.html"></iframe>
   </div>
 </div>
@@ -149,9 +142,11 @@ body {
   <div id="portfolioLine"></div>
   
   <h3 style="margin-top:30px;">Rolling EWMA</h3>
+  
   <p style="margin: 10px 0 20px 0; padding: 10px; background: #e0f0ff; border-left: 4px solid #2c7fb8; border-radius: 5px; font-weight: 500;">
     The EWMA (Exponentially Weighted Moving Average) chart below shows the volatility trend of the portfolio over time. The UCL and LCL lines represent the upper and lower control limits.
   </p>
+  
   <div id="portfolioEWMA"></div>
 </div>
 
@@ -168,7 +163,6 @@ $('.tab').click(function(){
   }
 });
 
-// Data fetching and plotting code remains the same
 const sheetId = "1hhUODYN7x6jwQ_GwAvVHCjqfge7wRzTDrKQbqqVR6uI";
 const tickersCSV = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Tickers`;
 const historyCSV = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Growth_History`;
@@ -211,7 +205,7 @@ async function loadGrowthData() {
         data: tableData,
         columns: [
           { title: "Ticker", data: "Ticker" },
-          { title: "Price 29.09.2025", data: "Price_Today" },
+          { title: "Price 23.09.2025", data: "Price_Today" },
           { title: "Current Price", data: "Current_Price" },
           { title: "Growth %", data: "Growth_Percent",
             createdCell: function(td, cellData, rowData) {
@@ -226,35 +220,49 @@ async function loadGrowthData() {
       });
     }
 
+    // --- Load Growth History ---
     const historyText = await (await fetch(historyCSV)).text();
     const historyData = parseCSV(historyText);
 
-    const times = historyData.map(h => new Date(h.Timestamp));
-    const avgGrowth = historyData.map(h => parseFloat(h.Avg_Growth) || 0);
+    const avgGrowth = [];
+    const hoverDates = [];
+    const tickvals = [];
+    const ticktext = [];
+    let lastDay = null;
 
-    const tickMap = {};
-    times.forEach(d => {
-      const key = d.toISOString().split('T')[0];
-      if (!(key in tickMap)) tickMap[key] = d;
+    historyData.forEach((h, i) => {
+      const date = new Date(h.Timestamp);
+      const day = date.getDay();
+      if(day !== 0 && day !== 6){ // skip weekends
+        avgGrowth.push(parseFloat(h.Avg_Growth) || 0);
+        hoverDates.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`); // day.month
+        const dayKey = date.toISOString().split('T')[0];
+        if(dayKey !== lastDay){ // first occurrence of each day
+          tickvals.push(avgGrowth.length - 1);
+          ticktext.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
+          lastDay = dayKey;
+        }
+      }
     });
-    const tickVals = Object.values(tickMap);
-    const tickText = tickVals.map(d => formatDateShort(d));
+
+    const xIndex = avgGrowth.map((_, i) => i);
 
     const trace = {
-      x: times,
+      x: xIndex,
       y: avgGrowth,
       mode: 'lines+markers',
       line: { color: '#2c7fb8', width: 3 },
       marker: { color: '#f03b20', size: 7 },
-      hovertemplate: '%{y:.2f}%<br>%{x|%d. %b}<extra></extra>'
+      customdata: hoverDates,
+      hovertemplate: '%{y:.2f}%<br>%{customdata}<extra></extra>'
     };
 
     const layout = {
       title: "Average Portfolio Growth",
       xaxis: {
         title: "Date",
-        tickvals: tickVals,
-        ticktext: tickText,
+        tickvals: tickvals,
+        ticktext: ticktext,
         tickangle: -45
       },
       yaxis: { title: "Average Growth (%)" },
@@ -266,58 +274,72 @@ async function loadGrowthData() {
     Plotly.newPlot('portfolioLine', [trace], layout, {responsive: true});
     document.getElementById('lastRefresh').innerText =
       `Last refreshed: ${formatDateShort(new Date())}`;
+
   } catch (err) {
     console.error(err);
     alert("Failed to load data. Check console.");
   }
 }
-
-async function loadEWMAGraph() {
+ 
+ async function loadEWMAGraph() {
   try {
     const ewmaCSV = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=EWMA`;
     const ewmaText = await (await fetch(ewmaCSV)).text();
     const ewmaData = parseCSV(ewmaText);
 
-    const timesEWMA = ewmaData.map(h => new Date(h.Timestamp));
-    const avgEWMA = ewmaData.map(h => parseFloat(h.EWMA_Volatility).toFixed(4) || 0);
-    const ucl = ewmaData.map(h => parseFloat(h.UCL).toFixed(4) || 0);
-    const lcl = ewmaData.map(h => parseFloat(h.LCL).toFixed(4) || 0);
+    const avgEWMA = [];
+    const hoverDates = [];
+    const tickvals = [];
+    const ticktext = [];
+    let lastDay = null;
 
+    // Filter out weekends and build hover/tick info
+    ewmaData.forEach((h) => {
+      const date = new Date(h.Timestamp);
+      const day = date.getDay();
+      if (day !== 0 && day !== 6) { // skip weekends
+        avgEWMA.push(parseFloat(h.EWMA_Volatility) || 0);
+        hoverDates.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
+        const dayKey = date.toISOString().split('T')[0];
+        if (dayKey !== lastDay) {
+          tickvals.push(avgEWMA.length - 1);
+          ticktext.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
+          lastDay = dayKey;
+        }
+      }
+    });
+
+    const xIndex = avgEWMA.map((_, i) => i);
+
+    // Calculate median for dashed line
     const sorted = [...avgEWMA].sort((a,b) => a - b);
     const mid = Math.floor(sorted.length / 2);
-    const median = sorted.length % 2 !== 0 ? sorted[mid] : ((parseFloat(sorted[mid-1]) + parseFloat(sorted[mid])) / 2).toFixed(4);
-
-    const tickMapEWMA = {};
-    timesEWMA.forEach(d => {
-      const key = d.toISOString().split('T')[0];
-      if (!(key in tickMapEWMA)) tickMapEWMA[key] = d;
-    });
-    const tickValsEWMA = Object.values(tickMapEWMA);
-    const tickTextEWMA = tickValsEWMA.map(d => formatDateShort(d));
+    const median = sorted.length % 2 !== 0 ? sorted[mid] : ((parseFloat(sorted[mid-1]) + parseFloat(sorted[mid])) / 2);
 
     const traceEWMA = {
-      x: timesEWMA,
+      x: xIndex,
       y: avgEWMA,
       mode: 'lines+markers',
-      line: { color: '#2c7fb8', width: 3, shape: 'linear' },
+      line: { color: '#2c7fb8', width: 3 },
       marker: { color: '#f03b20', size: 7 },
-      hovertemplate: '%{y:.4f}%<br>%{x|%d. %b}<extra></extra>',
+      customdata: hoverDates,
+      hovertemplate: '%{y:.4f}%<br>%{customdata}<extra></extra>',
       name: 'EWMA'
     };
 
     const traceUCL = {
-      x: timesEWMA,
-      y: ucl,
+      x: xIndex,
+      y: ewmaData.filter(h => { const d=new Date(h.Timestamp); return d.getDay()!==0 && d.getDay()!==6 }).map(h=>parseFloat(h.UCL) || 0),
       mode: 'lines',
-      line: { color: 'red', width: 2, shape: 'linear' },
+      line: { color: 'red', width: 2 },
       name: 'UCL'
     };
 
     const traceLCL = {
-      x: timesEWMA,
-      y: lcl,
+      x: xIndex,
+      y: ewmaData.filter(h => { const d=new Date(h.Timestamp); return d.getDay()!==0 && d.getDay()!==6 }).map(h=>parseFloat(h.LCL) || 0),
       mode: 'lines',
-      line: { color: 'red', width: 2, shape: 'linear' },
+      line: { color: 'red', width: 2 },
       name: 'LCL'
     };
 
@@ -325,23 +347,19 @@ async function loadEWMAGraph() {
       title: { text: "Rolling EWMA", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 16 } },
       xaxis: {
         title: { text: "Date", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 14 } },
-        tickvals: tickValsEWMA,
-        ticktext: tickTextEWMA,
-        tickangle: -45,
-        tickfont: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 12 }
+        tickvals: tickvals,
+        ticktext: ticktext,
+        tickangle: -45
       },
-      yaxis: { 
-        title: { text: "EWMA (%)", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 14 } },
-        tickfont: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 12 }
-      },
+      yaxis: { title: "EWMA (%)" },
       margin: { t: 55, b: 70 },
       plot_bgcolor: "#fff",
       paper_bgcolor: "#fff",
       shapes: [
         {
           type: 'line',
-          x0: timesEWMA[0],
-          x1: timesEWMA[timesEWMA.length-1],
+          x0: 0,
+          x1: avgEWMA.length - 1,
           y0: median,
           y1: median,
           line: { color: 'black', width: 2, dash: 'dash' }
@@ -350,11 +368,13 @@ async function loadEWMAGraph() {
     };
 
     Plotly.newPlot('portfolioEWMA', [traceEWMA, traceUCL, traceLCL], layoutEWMA, {responsive: true});
+
   } catch (err) {
     console.error(err);
     alert("Failed to load EWMA data. Check console.");
   }
 }
+
 
 async function loadAllGrowthData() {
   await loadGrowthData();
