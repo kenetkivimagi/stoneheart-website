@@ -57,24 +57,18 @@ body {
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
 .tab-content.active { display: block; }
-.responsive-iframe {
-  position: relative;
+.fullpage-iframe {
   width: 100%;
-  padding-bottom: 120%;
-  height: 0;
-  overflow: hidden;
-  margin: 10px 0;
+  height: 130vh;
+  margin: 0;
+  padding: 0;
 }
-.responsive-iframe iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
+.fullpage-iframe iframe {
   width: 100%;
   height: 100%;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  background-color: white;
+  border: none;
 }
+
 #refresh {
   background: #16264d;
   color: white;
@@ -101,10 +95,23 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   padding: 10px;
 }
+ 
+/* Make tables fit on mobile */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
 @media (max-width: 600px) {
   .header-container h1 { font-size: 1.2em; }
   .tab { padding: 4px 8px; font-size: 0.75em; margin-right: 2px; }
   #portfolioLine, #portfolioEWMA { height: 300px; }
+
+  /* Scale down the stocks table */
+  .table-responsive iframe {
+    transform: scale(0.7);
+    transform-origin: 0 0;
+    width: calc(100% / 0.7);
+  }
 }
 </style>
 </head>
@@ -114,19 +121,19 @@ body {
   <h1>Stoneheart</h1>
   <div class="tab-container">
     <div class="tab active" data-tab="cv">📄 CV</div>
-    <div class="tab" data-tab="stocks">📈 Top Stock Picks</div>
+    <div class="tab" data-tab="stocks">📈 Model Based Rankings 2025</div>
     <div class="tab" data-tab="growth">💹 Growth Tracker</div>
   </div>
 </div>
 
-<div id="cv" class="tab-content active" style="background-color: #e0e0e0; padding: 10px 0;">
-  <div class="responsive-iframe">
+<div id="cv" class="tab-content active" style="background-color: #e0e0e0; padding: 0;">
+  <div class="fullpage-iframe">
     <iframe src="https://drive.google.com/file/d/1gaxYPlfA4Hqq7lEqLN5UXtuVqMgGdK3U/preview"></iframe>
   </div>
 </div>
 
 <div id="stocks" class="tab-content">
-  <div class="responsive-iframe">
+  <div class="fullpage-iframe table-responsive">
     <iframe src="web.html"></iframe>
   </div>
 </div>
@@ -142,12 +149,9 @@ body {
   <div id="portfolioLine"></div>
   
   <h3 style="margin-top:30px;">Rolling EWMA</h3>
-  
   <p style="margin: 10px 0 20px 0; padding: 10px; background: #e0f0ff; border-left: 4px solid #2c7fb8; border-radius: 5px; font-weight: 500;">
-    The EWMA (Exponentially Weighted Moving Average) chart below shows the volatility trend of the portfolio over time. <br>
-    Hourly λ = 0.99
+    The EWMA (Exponentially Weighted Moving Average) chart below shows the volatility trend of the portfolio over time. The UCL and LCL lines represent the upper and lower control limits.
   </p>
-  
   <div id="portfolioEWMA"></div>
 </div>
 
@@ -206,7 +210,7 @@ async function loadGrowthData() {
         data: tableData,
         columns: [
           { title: "Ticker", data: "Ticker" },
-          { title: "Price 23.09.2025", data: "Price_Today" },
+          { title: "Price 29.09.2025", data: "Price_Today" },
           { title: "Current Price", data: "Current_Price" },
           { title: "Growth %", data: "Growth_Percent",
             createdCell: function(td, cellData, rowData) {
@@ -221,7 +225,7 @@ async function loadGrowthData() {
       });
     }
 
-    // --- Load Growth History ---
+    // --- Updated Growth Graph Logic ---
     const historyText = await (await fetch(historyCSV)).text();
     const historyData = parseCSV(historyText);
 
@@ -231,14 +235,14 @@ async function loadGrowthData() {
     const ticktext = [];
     let lastDay = null;
 
-    historyData.forEach((h, i) => {
+    historyData.forEach((h) => {
       const date = new Date(h.Timestamp);
       const day = date.getDay();
       if(day !== 0 && day !== 6){ // skip weekends
         avgGrowth.push(parseFloat(h.Avg_Growth) || 0);
-        hoverDates.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`); // day.month
+        hoverDates.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
         const dayKey = date.toISOString().split('T')[0];
-        if(dayKey !== lastDay){ // first occurrence of each day
+        if(dayKey !== lastDay){
           tickvals.push(avgGrowth.length - 1);
           ticktext.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
           lastDay = dayKey;
@@ -260,12 +264,7 @@ async function loadGrowthData() {
 
     const layout = {
       title: "Average Portfolio Growth",
-      xaxis: {
-        title: "Date",
-        tickvals: tickvals,
-        ticktext: ticktext,
-        tickangle: -45
-      },
+      xaxis: { title: "Date", tickvals: tickvals, ticktext: ticktext, tickangle: -45 },
       yaxis: { title: "Average Growth (%)" },
       margin: { t: 55, b: 70 },
       plot_bgcolor: "#fff",
@@ -273,16 +272,15 @@ async function loadGrowthData() {
     };
 
     Plotly.newPlot('portfolioLine', [trace], layout, {responsive: true});
-    document.getElementById('lastRefresh').innerText =
-      `Last refreshed: ${formatDateShort(new Date())}`;
+    document.getElementById('lastRefresh').innerText = `Last refreshed: ${formatDateShort(new Date())}`;
 
   } catch (err) {
     console.error(err);
     alert("Failed to load data. Check console.");
   }
 }
- 
- async function loadEWMAGraph() {
+
+async function loadEWMAGraph() {
   try {
     const ewmaCSV = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=EWMA`;
     const ewmaText = await (await fetch(ewmaCSV)).text();
@@ -294,15 +292,14 @@ async function loadGrowthData() {
     const ticktext = [];
     let lastDay = null;
 
-    // Filter out weekends and build hover/tick info
     ewmaData.forEach((h) => {
       const date = new Date(h.Timestamp);
       const day = date.getDay();
-      if (day !== 0 && day !== 6) { // skip weekends
+      if(day !== 0 && day !== 6){ // skip weekends
         avgEWMA.push(parseFloat(h.EWMA_Volatility) || 0);
         hoverDates.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
         const dayKey = date.toISOString().split('T')[0];
-        if (dayKey !== lastDay) {
+        if(dayKey !== lastDay){
           tickvals.push(avgEWMA.length - 1);
           ticktext.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
           lastDay = dayKey;
@@ -312,7 +309,6 @@ async function loadGrowthData() {
 
     const xIndex = avgEWMA.map((_, i) => i);
 
-    // Calculate median for dashed line
     const sorted = [...avgEWMA].sort((a,b) => a - b);
     const mid = Math.floor(sorted.length / 2);
     const median = sorted.length % 2 !== 0 ? sorted[mid] : ((parseFloat(sorted[mid-1]) + parseFloat(sorted[mid])) / 2);
@@ -327,29 +323,22 @@ async function loadGrowthData() {
       name: 'EWMA'
     };
 
-
     const layoutEWMA = {
       title: { text: "Rolling EWMA", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 16 } },
-      xaxis: {
-        title: { text: "Date", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 14 } },
-        tickvals: tickvals,
-        ticktext: ticktext,
-        tickangle: -45
-      },
+      xaxis: { title: { text: "Date", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 14 } },
+               tickvals: tickvals, ticktext: ticktext, tickangle: -45 },
       yaxis: { title: "EWMA (%)" },
       margin: { t: 55, b: 70 },
       plot_bgcolor: "#fff",
       paper_bgcolor: "#fff",
-      shapes: [
-        {
-          type: 'line',
-          x0: 0,
-          x1: avgEWMA.length - 1,
-          y0: median,
-          y1: median,
-          line: { color: 'black', width: 2, dash: 'dash' }
-        }
-      ]
+      shapes: [{
+        type: 'line',
+        x0: 0,
+        x1: avgEWMA.length - 1,
+        y0: median,
+        y1: median,
+        line: { color: 'black', width: 2, dash: 'dash' }
+      }]
     };
 
     Plotly.newPlot('portfolioEWMA', [traceEWMA], layoutEWMA, {responsive: true});
@@ -360,7 +349,6 @@ async function loadGrowthData() {
   }
 }
 
-
 async function loadAllGrowthData() {
   await loadGrowthData();
   await loadEWMAGraph();
@@ -370,6 +358,8 @@ loadAllGrowthData();
 document.getElementById('refresh').addEventListener('click', loadAllGrowthData);
 </script>
 
+
 </body>
 </html>
+
 
