@@ -320,9 +320,8 @@ async function loadGrowthData() {
     const traceEWMA = {
       x: xIndex,
       y: avgEWMA,
-      mode: 'lines+markers',
-      line: { color: '#2c7fb8', width: 3 },
-      marker: { color: '#f03b20', size: 7 },
+      mode: 'lines',
+      line: { color: 'red', width: 3 },
       customdata: hoverDates,
       hovertemplate: '%{y:.4f}%<br>%{customdata}<extra></extra>',
       name: 'EWMA'
