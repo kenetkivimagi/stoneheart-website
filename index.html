@@ -144,7 +144,8 @@ body {
   <h3 style="margin-top:30px;">Rolling EWMA</h3>
   
   <p style="margin: 10px 0 20px 0; padding: 10px; background: #e0f0ff; border-left: 4px solid #2c7fb8; border-radius: 5px; font-weight: 500;">
-    The EWMA (Exponentially Weighted Moving Average) chart below shows the volatility trend of the portfolio over time. The UCL and LCL lines represent the upper and lower control limits.
+    The EWMA (Exponentially Weighted Moving Average) chart below shows the volatility trend of the portfolio over time. <br>
+    Hourly λ = 0.99
   </p>
   
   <div id="portfolioEWMA"></div>
@@ -327,21 +328,6 @@ async function loadGrowthData() {
       name: 'EWMA'
     };
 
-    const traceUCL = {
-      x: xIndex,
-      y: ewmaData.filter(h => { const d=new Date(h.Timestamp); return d.getDay()!==0 && d.getDay()!==6 }).map(h=>parseFloat(h.UCL) || 0),
-      mode: 'lines',
-      line: { color: 'red', width: 2 },
-      name: 'UCL'
-    };
-
-    const traceLCL = {
-      x: xIndex,
-      y: ewmaData.filter(h => { const d=new Date(h.Timestamp); return d.getDay()!==0 && d.getDay()!==6 }).map(h=>parseFloat(h.LCL) || 0),
-      mode: 'lines',
-      line: { color: 'red', width: 2 },
-      name: 'LCL'
-    };
 
     const layoutEWMA = {
       title: { text: "Rolling EWMA", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 16 } },
@@ -367,7 +353,7 @@ async function loadGrowthData() {
       ]
     };
 
-    Plotly.newPlot('portfolioEWMA', [traceEWMA, traceUCL, traceLCL], layoutEWMA, {responsive: true});
+    Plotly.newPlot('portfolioEWMA', [traceEWMA], layoutEWMA, {responsive: true});
 
   } catch (err) {
     console.error(err);
