@@ -70,7 +70,7 @@ body {
   border: none;
 }
 
-#refresh {
+.refresh-btn {
   background: #16264d;
   color: white;
   border: none;
@@ -81,14 +81,22 @@ body {
   margin-bottom: 12px;
   transition: 0.3s;
 }
-#refresh:hover { background: #0a1a33; }
+.refresh-btn:hover { background: #0a1a33; }
 .dataTables_wrapper { font-size: 13px; }
-#growthTable { border-radius: 8px; overflow: hidden; }
-#growthTable tbody tr:hover { background-color: #f1f7ff; }
-#growthTable tbody td { text-align: center; padding: 8px; }
-#growthTable tbody td.negative { color: #d9534f; font-weight: bold; }
-#growthTable tbody td.positive { color: #5cb85c; font-weight: bold; }
-#portfolioLine, #portfolioEWMA {
+.growth-table { border-radius: 8px; overflow: hidden; }
+.growth-table tbody tr:hover { background-color: #f1f7ff; }
+.growth-table tbody td { text-align: center; padding: 8px; }
+table.growth-table.dataTable tbody tr.benchmark-row td {
+  background-color: rgba(0,0,0,0.04);
+  border-top: 2px solid rgba(0,0,0,0.55) !important;
+  border-bottom: 2px solid rgba(0,0,0,0.55) !important;
+}
+table.growth-table.dataTable tbody tr.benchmark-row td:first-child { border-left: 2px solid rgba(0,0,0,0.55) !important; }
+table.growth-table.dataTable tbody tr.benchmark-row td:last-child { border-right: 2px solid rgba(0,0,0,0.55) !important; }
+.yellow-check { color: #ffd400; }
+.growth-table tbody td.negative { color: #d9534f; font-weight: bold; }
+.growth-table tbody td.positive { color: #5cb85c; font-weight: bold; }
+.portfolio-chart {
   width: 100%;
   height: 50vh;
   border-radius: 10px;
@@ -105,7 +113,7 @@ body {
 @media (max-width: 600px) {
   .header-container h1 { font-size: 1.2em; }
   .tab { padding: 4px 8px; font-size: 0.75em; margin-right: 2px; }
-  #portfolioLine, #portfolioEWMA { height: 300px; }
+  .portfolio-chart { height: 300px; }
 
   /* Scale down the stocks table */
   .table-responsive iframe {
@@ -123,13 +131,13 @@ body {
   <div class="tab-container">
     <div class="tab active" data-tab="cv">📄 CV</div>
     <div class="tab" data-tab="stocks">📈 Model Based Rankings 2025</div>
-    <div class="tab" data-tab="growth">💹 Growth Tracker</div>
+    <div class="tab" data-tab="growth2025"><span class="yellow-check">&#10004;&#xFE0E;</span> Growth Tracker 2025</div>
+    <div class="tab" data-tab="growth2026">💹 Growth Tracker 2026</div>
   </div>
 </div>
 
 <div id="cv" class="tab-content active" style="background-color: #fff; padding: 0;">
   <img src="CV_Kenet_Kivimagi.pdf" alt="My CV" style="width: 100%; height: auto; display: block;">
-</div>
 </div>
 
 <div id="stocks" class="tab-content">
@@ -138,41 +146,79 @@ body {
   </div>
 </div>
 
-<div id="growth" class="tab-content">
-  <button id="refresh">🔄 Refresh Data</button>
-  <p id="lastRefresh" style="font-weight: bold; margin-bottom: 12px;"></p>
+<!-- Growth Tracker 2025 -->
+<div id="growth2025" class="tab-content">
+  <button id="refresh2025" class="refresh-btn">🔄 Refresh Data</button>
+  <p id="lastRefresh2025" style="font-weight: bold; margin-bottom: 12px;"></p>
   
   <h3>Tickers Table</h3>
-  <table id="growthTable" class="display" style="width:100%"></table>
+  <table id="growthTable2025" class="display growth-table" style="width:100%"></table>
   
   <h3 style="margin-top:30px;">Rolling Portfolio Growth</h3>
-  <div id="portfolioLine"></div>
+  <div id="portfolioLine2025" class="portfolio-chart"></div>
   
   <h3 style="margin-top:30px;">Rolling EWMA</h3>
   <p style="margin: 10px 0 20px 0; padding: 10px; background: #e0f0ff; border-left: 4px solid #2c7fb8; border-radius: 5px; font-weight: 500;">
     The EWMA (Exponentially Weighted Moving Average) chart below shows the volatility trend of the portfolio over time. <br>
     Hourly λ = 0.99
   </p>
-  <div id="portfolioEWMA"></div>
+  <div id="portfolioEWMA2025" class="portfolio-chart"></div>
+</div>
+
+<!-- Growth Tracker 2026 -->
+<div id="growth2026" class="tab-content">
+  <button id="refresh2026" class="refresh-btn">🔄 Refresh Data</button>
+  <p id="lastRefresh2026" style="font-weight: bold; margin-bottom: 12px;"></p>
+  
+  <h3>Tickers Table</h3>
+  <table id="growthTable2026" class="display growth-table" style="width:100%"></table>
+  
+  <h3 style="margin-top:30px;">Rolling Portfolio Growth</h3>
+  <div id="portfolioLine2026" class="portfolio-chart"></div>
+  
+  <h3 style="margin-top:30px;">Rolling EWMA</h3>
+  <p style="margin: 10px 0 20px 0; padding: 10px; background: #e0f0ff; border-left: 4px solid #2c7fb8; border-radius: 5px; font-weight: 500;">
+    The EWMA (Exponentially Weighted Moving Average) chart below shows the volatility trend of the portfolio over time. <br>
+    Hourly λ = 0.99
+  </p>
+  <div id="portfolioEWMA2026" class="portfolio-chart"></div>
 </div>
 
 <script>
+// ---------- Config for each tracker ----------
+// TODO: replace the 2026 sheetId and price column title with your real values.
+const TRACKERS = {
+  "2025": {
+    sheetId: "1hhUODYN7x6jwQ_GwAvVHCjqfge7wRzTDrKQbqqVR6uI",
+    priceColumnTitle: "Price 29.09.2025",
+    sheets: { tickers: "Tickers2025", history: "Growth_History2025", ewma: "EWMA2025" },
+    // Extra row shown under all stocks; growth is calculated automatically
+    benchmark: { name: "SP500 index", startPrice: 6715.79, currentPrice: 7773.95 }
+  },
+  "2026": {
+    sheetId: "1hhUODYN7x6jwQ_GwAvVHCjqfge7wRzTDrKQbqqVR6uI", // same as 2025 for now
+    priceColumnTitle: "Price 05.10.2026",
+    sheets: { tickers: "Tickers", history: "Growth_History", ewma: "EWMA" }
+  }
+};
+
+// ---------- Tabs ----------
 $('.tab').click(function(){
   $('.tab').removeClass('active');
   $(this).addClass('active');
   $('.tab-content').removeClass('active');
   const tabId = $(this).data('tab');
   $('#' + tabId).addClass('active');
-  if(tabId === 'growth'){
-    Plotly.Plots.resize('portfolioLine');
-    Plotly.Plots.resize('portfolioEWMA');
+  if(tabId.startsWith('growth')){
+    const year = tabId.replace('growth', '');
+    try {
+      Plotly.Plots.resize('portfolioLine' + year);
+      Plotly.Plots.resize('portfolioEWMA' + year);
+    } catch(e) { /* chart not drawn yet */ }
   }
 });
 
-const sheetId = "1hhUODYN7x6jwQ_GwAvVHCjqfge7wRzTDrKQbqqVR6uI";
-const tickersCSV = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Tickers`;
-const historyCSV = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Growth_History`;
-
+// ---------- Helpers ----------
 function parseCSV(text) {
   const rows = text.trim().split('\n');
   const headers = rows[0].split(',').map(h => h.replace(/"/g,'').trim());
@@ -190,181 +236,205 @@ function formatDateShort(date) {
   return `${day}. ${month}`;
 }
 
-async function loadGrowthData() {
-  try {
-    const tickersText = await (await fetch(tickersCSV)).text();
-    const tickersData = parseCSV(tickersText);
+// ---------- Growth tracker (one instance per year) ----------
+function createGrowthTracker(year) {
+  const cfg = TRACKERS[year];
+  const sheetUrl = (sheet) =>
+    `https://docs.google.com/spreadsheets/d/${cfg.sheetId}/gviz/tq?tqx=out:csv&sheet=${sheet}`;
 
-    const tableData = tickersData.map(t => ({
-      Ticker: t.Ticker,
-      Price_Today: t.Price_Today,
-      Current_Price: t.Current_Price,
-      Growth_Percent: t.Growth ? parseFloat(t.Growth).toFixed(2) + '%' : "",
-      GrowthClass: parseFloat(t.Growth) >= 0 ? 'positive' : 'negative'
-    }));
+  const tableSel = '#growthTable' + year;
+  const lineId = 'portfolioLine' + year;
+  const ewmaId = 'portfolioEWMA' + year;
 
-    if ($.fn.dataTable.isDataTable('#growthTable')) {
-      const dt = $('#growthTable').DataTable();
-      dt.clear().rows.add(tableData).draw();
-    } else {
-      $('#growthTable').DataTable({
-        data: tableData,
-        columns: [
-          { title: "Ticker", data: "Ticker" },
-          { title: "Price 29.09.2025", data: "Price_Today" },
-          { title: "Current Price", data: "Current_Price" },
-          { title: "Growth %", data: "Growth_Percent",
-            createdCell: function(td, cellData, rowData) {
-              $(td).addClass(rowData.GrowthClass);
+  async function loadGrowthData() {
+    try {
+      const tickersText = await (await fetch(sheetUrl(cfg.sheets.tickers))).text();
+      const tickersData = parseCSV(tickersText);
+
+      const tableData = tickersData.map(t => ({
+        Ticker: t.Ticker,
+        Price_Today: t.Price_Today,
+        Current_Price: t.Current_Price,
+        Growth_Percent: t.Growth ? parseFloat(t.Growth).toFixed(2) + '%' : "",
+        GrowthClass: parseFloat(t.Growth) >= 0 ? 'positive' : 'negative'
+      }));
+
+      // Benchmark row (e.g. SP500) added under all stocks
+      if (cfg.benchmark) {
+        const b = cfg.benchmark;
+        const bGrowth = (b.currentPrice / b.startPrice - 1) * 100;
+        tableData.push({
+          Ticker: b.name,
+          Price_Today: b.startPrice.toFixed(2),
+          Current_Price: b.currentPrice.toFixed(2),
+          Growth_Percent: bGrowth.toFixed(2) + '%',
+          GrowthClass: bGrowth >= 0 ? 'positive' : 'negative',
+          IsBenchmark: true
+        });
+      }
+
+      if ($.fn.dataTable.isDataTable(tableSel)) {
+        const dt = $(tableSel).DataTable();
+        dt.clear().rows.add(tableData).draw();
+      } else {
+        $(tableSel).DataTable({
+          data: tableData,
+          columns: [
+            { title: "Ticker", data: "Ticker" },
+            { title: cfg.priceColumnTitle, data: "Price_Today" },
+            { title: "Current Price", data: "Current_Price" },
+            { title: "Growth %", data: "Growth_Percent",
+              createdCell: function(td, cellData, rowData) {
+                $(td).addClass(rowData.GrowthClass);
+              }
             }
+          ],
+          createdRow: function(row, data) {
+            if (data.IsBenchmark) $(row).addClass('benchmark-row');
+          },
+          paging: false,
+          searching: false,
+          ordering: false,
+          responsive: true
+        });
+      }
+
+      const historyText = await (await fetch(sheetUrl(cfg.sheets.history))).text();
+      const historyData = parseCSV(historyText);
+
+      const avgGrowth = [];
+      const hoverDates = [];
+      const tickvals = [];
+      const ticktext = [];
+      let lastMonth = null;
+
+      historyData.forEach((h) => {
+        const date = new Date(h.Timestamp);
+        const day = date.getDay();
+        if(day !== 0 && day !== 6){ // skip weekends
+          avgGrowth.push(parseFloat(h.Avg_Growth) || 0);
+          hoverDates.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
+
+          const month = date.getMonth();
+          if(month !== lastMonth){
+            tickvals.push(avgGrowth.length - 1);
+            ticktext.push(date.toLocaleString('en-GB', { month: 'short' }));
+            lastMonth = month;
           }
-        ],
-        paging: false,
-        searching: false,
-        ordering: false,
-        responsive: true
+        }
       });
+
+      const xIndex = avgGrowth.map((_, i) => i);
+
+      const trace = {
+        x: xIndex,
+        y: avgGrowth,
+        mode: 'lines+markers',
+        line: { color: '#2c7fb8', width: 3 },
+        marker: { color: '#f03b20', size: 7 },
+        customdata: hoverDates,
+        hovertemplate: '%{y:.2f}%<br>%{customdata}<extra></extra>'
+      };
+
+      const layout = {
+        title: "Average Portfolio Growth",
+        xaxis: { title: "Date", tickvals: tickvals, ticktext: ticktext, tickangle: -45 },
+        yaxis: { title: "Average Growth (%)" },
+        margin: { t: 55, b: 70 },
+        plot_bgcolor: "#fff",
+        paper_bgcolor: "#fff"
+      };
+
+      Plotly.newPlot(lineId, [trace], layout, {responsive: true});
+      document.getElementById('lastRefresh' + year).innerText = `Last refreshed: ${formatDateShort(new Date())}`;
+
+    } catch (err) {
+      console.error(err);
+      alert(`Failed to load ${year} data. Check console.`);
     }
-
-    // --- Updated Growth Graph Logic ---
-    const historyText = await (await fetch(historyCSV)).text();
-    const historyData = parseCSV(historyText);
-
-    const avgGrowth = [];
-    const hoverDates = [];
-    const tickvals = [];
-    const ticktext = [];
-    let lastMonth = null;
-
-    historyData.forEach((h) => {
-      const date = new Date(h.Timestamp);
-      const day = date.getDay();
-      if(day !== 0 && day !== 6){ // skip weekends
-        avgGrowth.push(parseFloat(h.Avg_Growth) || 0);
-        hoverDates.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
-        
-        const month = date.getMonth(); 
-        const year = date.getFullYear();
-        
-        if(month !== lastMonth){
-          tickvals.push(avgGrowth.length - 1);
-          ticktext.push(date.toLocaleString('en-GB', { month: 'short' }));
-          lastMonth = month;
-        }
-      }
-    });
-
-    const xIndex = avgGrowth.map((_, i) => i);
-
-    const trace = {
-      x: xIndex,
-      y: avgGrowth,
-      mode: 'lines+markers',
-      line: { color: '#2c7fb8', width: 3 },
-      marker: { color: '#f03b20', size: 7 },
-      customdata: hoverDates,
-      hovertemplate: '%{y:.2f}%<br>%{customdata}<extra></extra>'
-    };
-
-    const layout = {
-      title: "Average Portfolio Growth",
-      xaxis: { title: "Date", tickvals: tickvals, ticktext: ticktext, tickangle: -45 },
-      yaxis: { title: "Average Growth (%)" },
-      margin: { t: 55, b: 70 },
-      plot_bgcolor: "#fff",
-      paper_bgcolor: "#fff"
-    };
-
-    Plotly.newPlot('portfolioLine', [trace], layout, {responsive: true});
-    document.getElementById('lastRefresh').innerText = `Last refreshed: ${formatDateShort(new Date())}`;
-
-  } catch (err) {
-    console.error(err);
-    alert("Failed to load data. Check console.");
   }
-}
 
-async function loadEWMAGraph() {
-  try {
-    const ewmaCSV = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=EWMA`;
-    const ewmaText = await (await fetch(ewmaCSV)).text();
-    const ewmaData = parseCSV(ewmaText);
+  async function loadEWMAGraph() {
+    try {
+      const ewmaText = await (await fetch(sheetUrl(cfg.sheets.ewma))).text();
+      const ewmaData = parseCSV(ewmaText);
 
-    const avgEWMA = [];
-    const hoverDates = [];
-    const tickvals = [];
-    const ticktext = [];
-    let lastMonth = null;
+      const avgEWMA = [];
+      const hoverDates = [];
+      const tickvals = [];
+      const ticktext = [];
+      let lastMonth = null;
 
-    ewmaData.forEach((h) => {
-      const date = new Date(h.Timestamp);
-      const day = date.getDay();
-      if(day !== 0 && day !== 6){ // skip weekends
-        avgEWMA.push(parseFloat(h.EWMA_Volatility) || 0);
-        hoverDates.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
-        
-        const month = date.getMonth(); 
-        const year = date.getFullYear();
+      ewmaData.forEach((h) => {
+        const date = new Date(h.Timestamp);
+        const day = date.getDay();
+        if(day !== 0 && day !== 6){ // skip weekends
+          avgEWMA.push(parseFloat(h.EWMA_Volatility) || 0);
+          hoverDates.push(`${date.getDate()}. ${date.toLocaleString('en-GB', { month: 'short' })}`);
 
-        if(month !== lastMonth){
-          tickvals.push(avgEWMA.length - 1);
-          ticktext.push(date.toLocaleString('en-GB', { month: 'short' }));
-          lastMonth = month;
+          const month = date.getMonth();
+          if(month !== lastMonth){
+            tickvals.push(avgEWMA.length - 1);
+            ticktext.push(date.toLocaleString('en-GB', { month: 'short' }));
+            lastMonth = month;
+          }
         }
-      }
-    });
+      });
 
-    const xIndex = avgEWMA.map((_, i) => i);
+      const xIndex = avgEWMA.map((_, i) => i);
 
-    const sorted = [...avgEWMA].sort((a,b) => a - b);
-    const mid = Math.floor(sorted.length / 2);
-    const median = sorted.length % 2 !== 0 ? sorted[mid] : ((parseFloat(sorted[mid-1]) + parseFloat(sorted[mid])) / 2);
+      const sorted = [...avgEWMA].sort((a,b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      const median = sorted.length % 2 !== 0 ? sorted[mid] : ((parseFloat(sorted[mid-1]) + parseFloat(sorted[mid])) / 2);
 
-    const traceEWMA = {
-      x: xIndex,
-      y: avgEWMA,
-      mode: 'lines',
-      line: { color: 'red', width: 3 },
-      customdata: hoverDates,
-      hovertemplate: '%{y:.4f}%<br>%{customdata}<extra></extra>',
-      name: 'EWMA'
-    };
+      const traceEWMA = {
+        x: xIndex,
+        y: avgEWMA,
+        mode: 'lines',
+        line: { color: 'red', width: 3 },
+        customdata: hoverDates,
+        hovertemplate: '%{y:.4f}%<br>%{customdata}<extra></extra>',
+        name: 'EWMA'
+      };
 
-    const layoutEWMA = {
-      title: { text: "Rolling EWMA", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 16 } },
-      xaxis: { title: { text: "Date", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 14 } },
-               tickvals: tickvals, ticktext: ticktext, tickangle: -45 },
-      yaxis: { title: "EWMA (%)" },
-      margin: { t: 55, b: 70 },
-      plot_bgcolor: "#fff",
-      paper_bgcolor: "#fff",
-      shapes: [{
-        type: 'line',
-        x0: 0,
-        x1: avgEWMA.length - 1,
-        y0: median,
-        y1: median,
-        line: { color: 'black', width: 2, dash: 'dash' }
-      }]
-    };
+      const layoutEWMA = {
+        title: { text: "Rolling EWMA", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 16 } },
+        xaxis: { title: { text: "Date", font: { family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', size: 14 } },
+                 tickvals: tickvals, ticktext: ticktext, tickangle: -45 },
+        yaxis: { title: "EWMA (%)" },
+        margin: { t: 55, b: 70 },
+        plot_bgcolor: "#fff",
+        paper_bgcolor: "#fff",
+        shapes: [{
+          type: 'line',
+          x0: 0,
+          x1: avgEWMA.length - 1,
+          y0: median,
+          y1: median,
+          line: { color: 'black', width: 2, dash: 'dash' }
+        }]
+      };
 
-    Plotly.newPlot('portfolioEWMA', [traceEWMA], layoutEWMA, {responsive: true});
+      Plotly.newPlot(ewmaId, [traceEWMA], layoutEWMA, {responsive: true});
 
-  } catch (err) {
-    console.error(err);
-    alert("Failed to load EWMA data. Check console.");
+    } catch (err) {
+      console.error(err);
+      alert(`Failed to load ${year} EWMA data. Check console.`);
+    }
   }
+
+  async function loadAll() {
+    await loadGrowthData();
+    await loadEWMAGraph();
+  }
+
+  loadAll();
+  document.getElementById('refresh' + year).addEventListener('click', loadAll);
 }
 
-async function loadAllGrowthData() {
-  await loadGrowthData();
-  await loadEWMAGraph();
-}
-
-loadAllGrowthData();
-document.getElementById('refresh').addEventListener('click', loadAllGrowthData);
+createGrowthTracker("2025");
+createGrowthTracker("2026");
 </script>
-
 
 </body>
 </html>
